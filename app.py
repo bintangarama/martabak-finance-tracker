@@ -4,7 +4,19 @@ import plotly.express as px
 import gspread
 from datetime import datetime, date
 import uuid
+import pytz
 from streamlit_gsheets import GSheetsConnection
+
+# Timezone Indonesia (WIB = UTC+7)
+WIB = pytz.timezone("Asia/Jakarta")
+
+def now_wib() -> datetime:
+    """Kembalikan waktu saat ini dalam timezone WIB."""
+    return datetime.now(tz=WIB)
+
+def today_wib() -> date:
+    """Kembalikan tanggal hari ini dalam timezone WIB."""
+    return now_wib().date()
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -239,9 +251,9 @@ if menu == "Form Keuangan":
     with st.form("form_transaksi", clear_on_submit=True):
         col4, col5, col6 = st.columns(3)
         with col4:
-            tanggal = st.date_input("Tanggal Transaksi", value=date.today())
+            tanggal = st.date_input("Tanggal Transaksi", value=today_wib())
         with col5:
-            jam = st.time_input("Jam Transaksi", value=datetime.now().time(), step=60)
+            jam = st.time_input("Jam Transaksi", value=now_wib().time(), step=60)
         with col6:
             metode = st.selectbox("Metode Pembayaran", options=METODE_OPTIONS)
 
@@ -272,7 +284,7 @@ if menu == "Form Keuangan":
                 st.error(err)
         else:
             jenis_clean = "Pemasukan" if "Pemasukan" in jenis else "Pengeluaran"
-            tx_id = "TX-" + datetime.now().strftime("%Y%m%d%H%M%S") + "-" + str(uuid.uuid4())[:4].upper()
+            tx_id = "TX-" + now_wib().strftime("%Y%m%d%H%M%S") + "-" + str(uuid.uuid4())[:4].upper()
 
             row = {
                 "ID Transaksi": tx_id,
@@ -620,7 +632,7 @@ elif menu == "Dashboard":
 
         # Apply periode filter
         df_filtered = df.copy()
-        today = date.today()
+        today = today_wib()
         if periode == "Hari Ini":
             df_filtered = df_filtered[df_filtered["Tanggal"] == today]
         elif periode == "7 Hari Terakhir":
